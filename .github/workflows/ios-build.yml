@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Stage 1: Basic build without signing to verify the project builds
+  # Stage1: Basic build without signing to verify the project builds
   stage1-no-signing:
-    name: Stage 1 - Build without Signing
+    name: Stage1 - Build without Signing
     runs-on: macos-latest
     steps:
       - name: Checkout repository
@@ -22,6 +22,17 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Update CocoaPods
+        run: sudo gem install cocoapods
+
+      - name: Clean and install CocoaPods
+        run: |
+          cd ios
+          rm -rf Pods Podfile.lock
+          pod repo update
+          pod install --repo-update
+          cd ..
+
       - name: Build iOS without signing
         run: flutter build ios --release --no-codesign
 
@@ -32,9 +43,9 @@ jobs:
           path: build/ios/Release-iphoneos/
           retention-days: 7
 
-  # Stage 2: Full signed IPA build
+  # Stage2: Full signed IPA build
   stage2-signed-ipa:
-    name: Stage 2 - Signed IPA Build
+    name: Stage2 - Signed IPA Build
     runs-on: macos-latest
     needs: stage1-no-signing
     if: ${{ success() && (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') }}
@@ -49,6 +60,17 @@ jobs:
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Update CocoaPods
+        run: sudo gem install cocoapods
+
+      - name: Clean and install CocoaPods
+        run: |
+          cd ios
+          rm -rf Pods Podfile.lock
+          pod repo update
+          pod install --repo-update
+          cd ..
 
       - name: Create temporary keychain
         run: |
