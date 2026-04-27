@@ -1,0 +1,87 @@
+name: Flutter iOS Build
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  # Stage 1: Basic build without signing to verify the project builds
+  stage1-no-signing:
+    name: Stage 1 - Build without Signing
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS without signing
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload Stage 1 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-no-signing
+          path: build/ios/Release-iphoneos/
+          retention-days: 7
+
+  # Stage 2: Full signed IPA build
+  stage2-signed-ipa:
+    name: Stage 2 - Signed IPA Build
+    runs-on: macos-latest
+    needs: stage1-no-signing
+    if: ${{ success() && (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch') }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter (stable)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Create temporary keychain
+        run: |
+          security create-keychain -p "temp123" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "temp123" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+      - name: Decode and import certificate
+        env:
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$IOS_CERTIFICATE" | base64 --decode > cert.p12
+          security import cert.p12 -k build.keychain -P "$IOS_CERTIFICATE_PASSWORD" -A
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$IOS_CERTIFICATE_PASSWORD" build.keychain
+          rm cert.p12
+
+      - name: Install provisioning profile
+        env:
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > profile.mobileprovision
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+          rm profile.mobileprovision
+
+      - name: Build signed IPA
+        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+      - name: Upload signed IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-ios-ipa
+          path: build/ios/ipa/*.ipa
+          retention-days: 30
