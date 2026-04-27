@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyDjampACOhvSUygPUZuX8X-_aLn2D-8Mc4</string>
+	<key>GCM_SENDER_ID</key>
+	<string>825282016133</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.sadaqasite</string>
+	<key>PROJECT_ID</key>
+	<string>praynotify</string>
+	<key>STORAGE_BUCKET</key>
+	<string>praynotify.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:825282016133:ios:8cddef7857dd4ad1dc8aec</string>
+	<key>DATABASE_URL</key>
+	<string>https://praynotify-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
