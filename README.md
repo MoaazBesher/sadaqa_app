@@ -12,23 +12,23 @@
 
 > *"When a person dies, their deeds come to an end except for three: ongoing charity (sadaqa jariyah), beneficial knowledge, or a righteous child who prays for them."*
 
-### [⬇️ Download the App](https://sadaqa-mainpage.netlify.app/downloadpage/)
+### [Download the App](https://sadaqa-mainpage.netlify.app/downloadpage/)
 
 </div>
 
 ---
 
-## ✨ Features
+## Features
 
 | | | |
 |--|--|--|
-| 🕐 Prayer Times | ☀️ Morning Athkar | 🌙 Evening Athkar |
-| 📿 Digital Misbaha | 📖 Holy Quran | 🤲 Supplications (Du'a) |
-| 🙏 Sunnah Rawatib | 🔔 Smart Notifications | 🎵 Audio Athkar |
+| Prayer Times | Morning Athkar | Evening Athkar |
+| Digital Misbaha | Holy Quran | Supplications (Du'a) |
+| Sunnah Rawatib | Smart Notifications | Audio Athkar |
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Flutter SDK (stable channel)
@@ -56,7 +56,7 @@ cp google-services.json.example android/app/google-services.json
 
 ---
 
-## 🔔 Deep Linking with Notifications
+## Deep Linking with Notifications
 
 Send a `data` payload to navigate directly to a specific screen:
 
@@ -78,7 +78,7 @@ Send a `data` payload to navigate directly to a specific screen:
 
 ---
 
-## 🛠 CI/CD
+## CI/CD
 
 This project uses **GitHub Actions** for automated iOS builds:
 
@@ -96,19 +96,19 @@ This project uses **GitHub Actions** for automated iOS builds:
 
 ---
 
-## 📱 Supported Platforms
+## Supported Platforms
 
 - Android (minimum SDK 21)
 - iOS (minimum deployment target 13.0)
 
 ---
 
-## 🛡 License
+## License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-**جعله الله صدقة جارية 🤲**
+**جعله الله صدقة جارية**
 
 </div>
