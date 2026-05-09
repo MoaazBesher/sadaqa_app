@@ -19,7 +19,7 @@ migrate_working_dir/
 .idea/
 
 # VS Code
-#.vscode/
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -27,7 +27,6 @@ migrate_working_dir/
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/Flutter/generated.xcconfig
 .dart_tool/
-# .flutter-plugins-dependencies - NEEDED for iOS builds
 .pub-cache/
 .pub/
 /build/
@@ -39,14 +38,19 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Android Studio place build artifacts here
 /android/app/debug
 /android/app/profile
 /android/app/release
 
-# 🔒 SECURITY - Firebase sensitive files
-# Note: Removed from ignore to allow CI/CD builds. 
-# Keep your repository private if these files contain sensitive keys.
+# iOS
+ios/Pods/
+ios/.symlinks/
+
+# macOS
+.DS_Store
+
+# Firebase (uncomment if managing locally)
 # lib/firebase_options.dart
 # android/app/google-services.json
 # ios/Runner/GoogleService-Info.plist
