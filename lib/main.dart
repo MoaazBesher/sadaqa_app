@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';  
 import 'home_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'splash_screen.dart';

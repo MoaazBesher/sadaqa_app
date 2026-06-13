@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -6,6 +7,13 @@ import 'package:clipboard/clipboard.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'morning_azkar_page.dart';
 import 'evening_azkar_page.dart'; 
+import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'widgets/shared_drawer.dart';
+import 'widgets/shared_footer.dart';
+
 import 'prayer_times_page.dart';
 import 'masbaha_page.dart';
 import 'sonan_page.dart';
@@ -23,6 +31,9 @@ class _HomePageState extends State<HomePage> {
   
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final DatabaseReference _database = FirebaseDatabase.instance.ref();
+  
+  StreamSubscription? _dailyMessageSub;
+  StreamSubscription? _visitorStatsSub;
 
   @override
   void initState() {
@@ -33,6 +44,14 @@ class _HomePageState extends State<HomePage> {
     });
 
     _initializeFirebase();
+  }
+
+  @override
+  void dispose() {
+    _dailyMessageSub?.cancel();
+    _visitorStatsSub?.cancel();
+    _suggestionController.dispose();
+    super.dispose();
   }
 
   String _dailyMessage = "جارِ التحميل ...";
@@ -78,30 +97,36 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _loadDailyMessage() {
-    _database.child('daily_content').onValue.listen((event) {
+    _dailyMessageSub = _database.child('daily_content').onValue.listen((event) {
       final String message = event.snapshot.value?.toString() ?? 
           "تذكرة اليوم: الدعاء للموتى صدقة جارية";
       
-      setState(() {
-        _dailyMessage = message;
-      });
+      if (mounted) {
+        setState(() {
+          _dailyMessage = message;
+        });
+      }
     }, onError: (error) {
-      setState(() {
-        _dailyMessage = "تذكرة اليوم: الدعاء للموتى صدقة جارية";
-      });
+      if (mounted) {
+        setState(() {
+          _dailyMessage = "تذكرة اليوم: الدعاء للموتى صدقة جارية";
+        });
+      }
     });
   }
 
   void _loadVisitorStats() {
-    _database.child('visits').onValue.listen((event) {
+    _visitorStatsSub = _database.child('visits').onValue.listen((event) {
       if (event.snapshot.value != null) {
         final Map<dynamic, dynamic> data = 
             event.snapshot.value as Map<dynamic, dynamic>;
         
-        setState(() {
-          _uniqueVisitors = data['unique_visitors'] ?? 0;
-          _totalVisits = data['total_visits'] ?? 0;
-        });
+        if (mounted) {
+          setState(() {
+            _uniqueVisitors = data['unique_visitors'] ?? 0;
+            _totalVisits = data['total_visits'] ?? 0;
+          });
+        }
       }
     });
   }
@@ -171,6 +196,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: const SharedDrawer(activeSection: AppSection.home),
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: Color(0xFF1E1E1E),
@@ -190,7 +216,6 @@ class _HomePageState extends State<HomePage> {
         ),
         elevation: 0,
       ),
-      drawer: _buildDrawer(),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -238,7 +263,7 @@ class _HomePageState extends State<HomePage> {
             ),
             
             // الفوتر
-            _buildProfessionalFooter(),
+            const SharedFooter(),
           ],
         ),
       ),
@@ -248,7 +273,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSiteInfo() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(24),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -273,24 +298,41 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Column(
         children: [
-
-          SizedBox(height: 16),
           Text(
             'الموقع صدقة جارية على روح:',
             style: TextStyle(
               color: Color(0xFFFFD700),
               fontWeight: FontWeight.bold,
-              fontSize: 20,
+              fontSize: 16,
               fontFamily: 'Cairo',
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: 16),
-          _buildMemorialName('محمد أحمد محمد أنور'),
-          _buildMemorialName('محمد عزت حلمي البيبي'),
-          SizedBox(height: 16),
+          SizedBox(height: 10),
+          Text(
+            'محمد أحمد محمد أنور',
+            style: TextStyle(
+              color: Color(0xFFFFD700),
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              fontFamily: 'Cairo',
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 4),
+          Text(
+            'محمد عزت حلمي البيبي',
+            style: TextStyle(
+              color: Color(0xFFFFD700),
+              fontWeight: FontWeight.bold,
+              fontSize: 15,
+              fontFamily: 'Cairo',
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 10),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: Color(0xFFFFD700).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
@@ -303,34 +345,11 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(
                 color: Color(0xFFFFD700),
                 fontWeight: FontWeight.bold,
-                fontSize: 16,
+                fontSize: 13,
                 fontFamily: 'Cairo',
               ),
               textAlign: TextAlign.center,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemorialName(String name) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.eco, color: Color(0xFFFFD700), size: 16),
-          SizedBox(width: 8),
-          Text(
-            name,
-            style: TextStyle(
-              color: Color(0xFFFFD700),
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-              fontFamily: 'Cairo',
-            ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -343,61 +362,73 @@ class _HomePageState extends State<HomePage> {
       padding: EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF252525),
-            Color(0xFF1A1A1A),
+            Color(0xFF2A2A1A),
+            Color(0xFF1E1E10),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFFFFD700).withOpacity(0.15),
-            blurRadius: 8,
-            offset: Offset(0, 3),
+            color: Color(0xFFFFD700).withOpacity(0.25),
+            blurRadius: 16,
+            offset: Offset(0, 5),
           ),
         ],
         border: Border.all(
-          color: Color(0xFFDFCA10).withOpacity(0.2),
-          width: 1,
+          color: Color(0xFFFFD700).withOpacity(0.5),
+          width: 2,
         ),
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lightbulb_outline, color: Color(0xFFDFCA10), size: 24),
-              SizedBox(width: 8),
-              Text(
-                'تذكرة اليوم',
-                style: TextStyle(
-                  color: Color(0xFFDFCA10),
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Cairo',
-                ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            decoration: BoxDecoration(
+              color: Color(0xFFFFD700).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: Color(0xFFFFD700).withOpacity(0.4),
+                width: 1,
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.auto_awesome, color: Color(0xFFFFD700), size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'تذكرة اليوم',
+                  style: TextStyle(
+                    color: Color(0xFFFFD700),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+              ],
+            ),
           ),
           SizedBox(height: 16),
           Container(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Color(0xFF2A2A2A),
-              borderRadius: BorderRadius.circular(12),
+              color: Color(0xFF2A2A1A).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Color(0xFFDFCA10).withOpacity(0.1),
+                color: Color(0xFFFFD700).withOpacity(0.15),
               ),
             ),
             child: Text(
               _dailyMessage,
               style: TextStyle(
-                color: Color(0xFFE8E8E8),
-                fontSize: 17,
+                color: Color(0xFFFFF8E7),
+                fontSize: 18,
                 fontFamily: 'Cairo',
-                height: 1.6,
+                height: 1.8,
               ),
               textAlign: TextAlign.center,
             ),
@@ -434,11 +465,13 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Icon(Icons.widgets, color: Color(0xFFFFD700), size: 24),
+              SizedBox(width: 8),
               Text(
                 'أقسام الموقع',
                 style: TextStyle(
@@ -448,20 +481,43 @@ class _HomePageState extends State<HomePage> {
                   fontFamily: 'Cairo',
                 ),
               ),
-              SizedBox(width: 8),
-              Icon(Icons.widgets, color: Color(0xFFFFD700), size: 24),
             ],
           ),
           SizedBox(height: 8),
-          Text(
-            'من خلال القائمة الجانبية ☰',
-            style: TextStyle(
-              color: Color(0xFFFFD700).withOpacity(0.8),
-              fontWeight: FontWeight.w500,
-              fontSize: 16,
-              fontFamily: 'Cairo',
+          GestureDetector(
+            onTap: () {
+              _scaffoldKey.currentState?.openEndDrawer();
+            },
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Color(0xFFFFD700).withOpacity(0.08),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '☰',
+                    style: TextStyle(
+                      color: Color(0xFFFFD700),
+                      fontSize: 20,
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'من خلال القائمة الجانبية',
+                    style: TextStyle(
+                      color: Color(0xFFFFD700).withOpacity(0.9),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ],
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
           SizedBox(height: 20),
           _buildSectionItem('أوقات الصلاة', Icons.access_time, 
@@ -492,42 +548,35 @@ class _HomePageState extends State<HomePage> {
           color: Color(0xFFFFD700).withOpacity(0.1),
         ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(icon, color: Color(0xFFFFD700), size: 20),
-                  ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Color(0xFFFFD700), size: 20),
+              SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Color(0xFFFFD700),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                  fontFamily: 'Cairo',
                 ),
-                SizedBox(height: 8),
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: Color(0xFFE8E8E8),
-                    fontSize: 14,
-                    fontFamily: 'Cairo',
-                    height: 1.5,
-                  ),
-                  textAlign: TextAlign.right,
-                ),
-              ],
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            description,
+            style: TextStyle(
+              color: Color(0xFFE8E8E8),
+              fontSize: 14,
+              fontFamily: 'Cairo',
+              height: 1.5,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -825,166 +874,21 @@ class _HomePageState extends State<HomePage> {
         Text(
           value.toString(),
           style: TextStyle(
-            color: Color(0xFFFFD700),
+            color: Colors.white,
+            fontSize: 22,
             fontFamily: 'Cairo',
-            fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            color: Color(0xFFFFD700).withOpacity(0.8),
+            color: Colors.white70,
+            fontSize: 13,
             fontFamily: 'Cairo',
-            fontSize: 14,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildProfessionalFooter() {
-    return Container(
-      height: 70,
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Color(0xFF121212),
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFFFFD700).withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Designed and developed by ',
-            style: TextStyle(
-              color: Color(0xFF666666),
-              fontSize: 14,
-              fontFamily: 'Cairo',
-            ),
-          ),
-          GestureDetector(
-            onTap: _launchDeveloperWebsite,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Color(0xFF2a7ae2).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: Color(0xFF2a7ae2).withOpacity(0.3),
-                ),
-              ),
-              child: Text(
-                'Moaaz Ashraf',
-                style: TextStyle(
-                  color: Color(0xFF2a7ae2),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Cairo',
-                  decoration: TextDecoration.underline,
-                  decorationColor: Color(0xFF2a7ae2),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      backgroundColor: Color(0xFF1E1E1E),
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          Container(
-            height: 160,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF252525),
-                  Color(0xFF1A1A1A),
-                ],
-              ),
-            ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.mosque, color: Color(0xFFFFD700), size: 40),
-                  SizedBox(height: 8),
-                  Text(
-                    'صدقة جارية',
-                    style: TextStyle(
-                      color: Color(0xFFFFD700),
-                      fontSize: 28,
-                      fontFamily: 'Thuluth',
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          _buildDrawerItem('أوقات الصلاة', Icons.access_time, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => PrayerTimesPage()));
-          }),
-          _buildDrawerItem('السنن الرواتب', Icons.nightlight_round, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => SonanRawatibPage()));
-          }),
-          _buildDrawerItem('أذكار الصباح', Icons.wb_sunny, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => MorningAzkarPage()));
-          }),          
-          _buildDrawerItem('أذكار المساء', Icons.nights_stay, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => EveningAzkarPage()));
-          }),
-          _buildDrawerItem('أدعية', Icons.emoji_people, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => DoaaPage()));
-          }),
-          _buildDrawerItem('قرآن كريم', Icons.book, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => QuranPage()));
-          }),
-          _buildDrawerItem('المصحف', Icons.menu_book, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => MoshafPage()));
-          }),
-          _buildDrawerItem('مسبحة', Icons.psychology, () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => MisbahaPage()));
-          }),
-          _buildDrawerItem('عن الموقع', Icons.info, () {
-            Navigator.pop(context);
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDrawerItem(String title, IconData icon, VoidCallback onTap) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ListTile(
-        leading: Icon(icon, color: Color(0xFFFFD700)),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: Color(0xFFFFD700),
-            fontFamily: 'Cairo',
-            fontSize: 16,
-          ),
-        ),
-        onTap: onTap,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        tileColor: Color(0xFF252525).withOpacity(0.5),
-      ),
     );
   }
 }

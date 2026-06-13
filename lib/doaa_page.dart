@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'widgets/shared_drawer.dart';
+import 'widgets/shared_footer.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:clipboard/clipboard.dart';
 
@@ -404,8 +406,10 @@ class _DoaaPageState extends State<DoaaPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: const SharedDrawer(activeSection: AppSection.doaa),
       backgroundColor: Color(0xFF121212),
       appBar: AppBar(
+          automaticallyImplyLeading: false,
         backgroundColor: Color(0xFF1E1E1E),
         title: Text(
           'أدعية',
@@ -417,6 +421,14 @@ class _DoaaPageState extends State<DoaaPage> {
           ),
         ),
         centerTitle: true,
+                    actions: [
+            Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu_rounded, color: Color(0xFFFFD700)),
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+              ),
+            ),
+          ],
         iconTheme: IconThemeData(
           color: Color(0xFFFFD700),
           size: 30,
@@ -437,7 +449,7 @@ class _DoaaPageState extends State<DoaaPage> {
             ),
           ),
           // الفوتر
-          _buildFooter(),
+          const SharedFooter(),
         ],
       ),
     );
@@ -520,28 +532,6 @@ class _DoaaPageState extends State<DoaaPage> {
           ),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(16),
-      color: Color(0xFF121212),
-      child: GestureDetector(
-        onTap: () {
-          // يمكنك فتح الرابط هنا
-        },
-        child: Text(
-          'Designed and developed by Moaaz Ashraf',
-          style: TextStyle(
-            color: Color(0xFF555555),
-            fontSize: 14,
-            fontFamily: 'Cairo',
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
     );
   }
 }

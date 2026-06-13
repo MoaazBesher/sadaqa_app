@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'widgets/shared_drawer.dart';
+import 'widgets/shared_footer.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MorningAzkarPage extends StatefulWidget {
   @override
@@ -128,6 +129,18 @@ class _MorningAzkarPageState extends State<MorningAzkarPage> {
   void _loadCounters() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      int savedTimestamp = prefs.getInt('morning_azkar_timestamp') ?? 0;
+      int now = DateTime.now().millisecondsSinceEpoch;
+      if (now - savedTimestamp > 21600000) {
+        for (int i = 0; i < _azkarList.length; i++) {
+          setState(() {
+            _azkarList[i].currentCount = 0;
+          });
+          await prefs.remove('morning_azkar_$i');
+        }
+        await prefs.remove('morning_azkar_timestamp');
+        return;
+      }
       for (int i = 0; i < _azkarList.length; i++) {
         int savedCount = prefs.getInt('morning_azkar_$i') ?? 0;
         setState(() {
@@ -143,76 +156,10 @@ class _MorningAzkarPageState extends State<MorningAzkarPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('morning_azkar_$index', count);
+      await prefs.setInt('morning_azkar_timestamp', DateTime.now().millisecondsSinceEpoch);
     } catch (error) {
       print("Error saving counter: $error");
     }
-  }
-
-  void _resetAllCounters() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: Color(0xFF252525),
-          title: Text(
-            'إعادة العدادات',
-            style: TextStyle(
-              color: Color(0xFFFFD700),
-              fontFamily: 'Cairo',
-            ),
-            textAlign: TextAlign.center,
-          ),
-          content: Text(
-            'هل تريد إعادة جميع العدادات ؟ ',
-            style: TextStyle(
-              color: Color(0xFFE0E0E0),
-              fontFamily: 'Cairo',
-            ),
-            textAlign: TextAlign.center,
-          ),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      'إلغاء',
-                      style: TextStyle(
-                        color: Color(0xFFFFD700),
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      setState(() {
-                        for (int i = 0; i < _azkarList.length; i++) {
-                          _azkarList[i].currentCount = 0;
-                          _saveCounter(i, 0);
-                        }
-                      });
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      'تأكيد',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -223,7 +170,9 @@ class _MorningAzkarPageState extends State<MorningAzkarPage> {
         return false;
       },
       child: Scaffold(
+        endDrawer: const SharedDrawer(activeSection: AppSection.morningAzkar),
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: Color(0xFF2D2D2D),
           title: Text(
             'أذكار الصباح',
@@ -240,10 +189,11 @@ class _MorningAzkarPageState extends State<MorningAzkarPage> {
             size: 30,
           ),
           actions: [
-            IconButton(
-              icon: Icon(Icons.refresh),
-              onPressed: _resetAllCounters,
-              tooltip: 'إعادة العدادات',
+            Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu_rounded, color: Color(0xFFFFD700)),
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+              ),
             ),
           ],
         ),
@@ -251,53 +201,12 @@ class _MorningAzkarPageState extends State<MorningAzkarPage> {
           padding: EdgeInsets.all(16),
           child: Column(
             children: [
-              // زر إعادة العدادات
-              Container(
-                margin: EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0xFFFFD700).withOpacity(0.4),
-                      blurRadius: 8,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: ElevatedButton(
-                  onPressed: _resetAllCounters,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFFD700),
-                    foregroundColor: Colors.black,
-                    padding: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.refresh, size: 24),
-                      SizedBox(width: 8),
-                      Text(
-                        'إعادة العدادات',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Cairo',
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              
               // قائمة الأذكار
               _buildAzkarList(),
             ],
           ),
         ),
-        bottomNavigationBar: _buildProfessionalFooter(),
+        bottomNavigationBar: const SharedFooter(),
       ),
     );
   }
@@ -314,136 +223,91 @@ class _MorningAzkarPageState extends State<MorningAzkarPage> {
   }
 
   Widget _buildAzkarItem(AzkarItem azkar, int index) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 15),
-      decoration: BoxDecoration(
-        color: Color(0xFF252525),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFFFFD700).withOpacity(0.2),
-            blurRadius: 8,
-            offset: Offset(0, 4),
+    bool isComplete = azkar.currentCount >= azkar.maxCount;
+    return Opacity(
+      opacity: isComplete ? 0.45 : 1.0,
+      child: Container(
+        margin: EdgeInsets.only(bottom: 15),
+        decoration: BoxDecoration(
+          color: isComplete ? Color(0xFF1A1A1A) : Color(0xFF252525),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isComplete
+                ? Color(0xFF2A5A2A)
+                : Color(0xFFFFD700).withValues(alpha: 0.25),
+            width: isComplete ? 1.5 : 1,
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            setState(() {
-              if (azkar.currentCount < azkar.maxCount) {
-                azkar.currentCount++;
-                _saveCounter(index, azkar.currentCount);
-              }
-            });
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // النص
-                Expanded(
-                  child: Text(
-                    azkar.text,
-                    style: TextStyle(
-                      color: Color(0xFFE0E0E0),
-                      fontSize: 16,
-                      fontFamily: 'Cairo',
-                      height: 1.6,
-                    ),
-                    textAlign: TextAlign.right,
+          boxShadow: isComplete
+              ? []
+              : [
+                  BoxShadow(
+                    color: Color(0xFFFFD700).withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
                   ),
-                ),
-                
-                // العداد
-                SizedBox(width: 15),
-                Container(
-                  width: 70,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF444444),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0xFFFFD700).withOpacity(0.3),
-                        blurRadius: 4,
-                        spreadRadius: 0.5,
-                      ),
-                    ],
-                  ),
-                  child: Center(
+                ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              setState(() {
+                if (azkar.currentCount < azkar.maxCount) {
+                  azkar.currentCount++;
+                  _saveCounter(index, azkar.currentCount);
+                }
+              });
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
                     child: Text(
+                      azkar.text,
+                      style: TextStyle(
+                        color: isComplete
+                            ? Color(0xFF808080)
+                            : Color(0xFFE0E0E0),
+                        fontSize: 16,
+                        fontFamily: 'Cairo',
+                        height: 1.6,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ),
+                  SizedBox(width: 15),
+                  Container(
+                    width: 70,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: isComplete
+                          ? Color(0xFF1A3A1A)
+                          : Color(0xFF444444),
+                      borderRadius: BorderRadius.circular(10),
+                      border: isComplete
+                          ? Border.all(color: Color(0xFF2A5A2A), width: 1)
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(
                       '${azkar.currentCount} / ${azkar.maxCount}',
                       style: TextStyle(
-                        color: Color(0xFFFFD700),
+                        color: isComplete
+                            ? Color(0xFF4CAF50)
+                            : Color(0xFFFFD700),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         fontFamily: 'Cairo',
                       ),
                     ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _launchDeveloperWebsite() async {
-    final Uri url = Uri.parse('https://moaaz-testing.netlify.app/');
-    if (!await launchUrl(url)) {
-      throw Exception('Could not launch $url');
-    }
-  }
-
-  Widget _buildProfessionalFooter() {
-    return Container(
-      height: 70,
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: Color(0xFF121212),
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFF252525),
-            width: 1,
-          ),
-        ),
-      ),
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: GestureDetector(
-          onTap: _launchDeveloperWebsite,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Designed and developed by ',
-                style: TextStyle(
-                  color: Color(0xFF555555),
-                  fontSize: 14,
-                  fontFamily: 'Cairo',
-                ),
-              ),
-              AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                child: Text(
-                  'Moaaz Ashraf',
-                  style: TextStyle(
-                    color: Color(0xFF2a7ae2),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    fontFamily: 'Cairo',
-                    decoration: TextDecoration.underline,
-                    decorationColor: Color(0xFF2a7ae2),
-                  ),
-                ),
-              ),
-            ],
           ),
         ),
       ),

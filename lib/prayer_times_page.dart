@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'widgets/shared_drawer.dart';
+import 'widgets/shared_footer.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
@@ -303,6 +305,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> with WidgetsBindingOb
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: const SharedDrawer(activeSection: AppSection.prayerTimes),
       backgroundColor: const Color(0xFF121212),
       body: SafeArea(
         child: Column(
@@ -323,7 +326,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> with WidgetsBindingOb
                       ),
                     ),
             ),
-            _buildFooter(),
+            const SharedFooter(),
           ],
         ),
       ),
@@ -365,17 +368,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> with WidgetsBindingOb
       ),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Color(0xFFFFD700),
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 56),
           Expanded(
             child: Text(
               'مواعيد الصلاة',
@@ -388,8 +381,12 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> with WidgetsBindingOb
               textAlign: TextAlign.center,
             ),
           ),
-          // مساحة فارغة للمحافظة على التوازن
-          const SizedBox(width: 56),
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.menu_rounded, color: Color(0xFFFFD700), size: 28),
+              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            ),
+          ),
         ],
       ),
     );
@@ -552,49 +549,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> with WidgetsBindingOb
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFooter() {
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF121212),
-        border: Border(
-          top: BorderSide(
-            color: const Color(0xFF252525),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Designed and developed by ',
-            style: TextStyle(
-              color: const Color(0xFF555555),
-              fontSize: 14,
-              fontFamily: 'Cairo',
-            ),
-          ),
-          GestureDetector(
-            onTap: _launchDeveloperWebsite,
-            child: Text(
-              'Moaaz Ashraf',
-              style: TextStyle(
-                color: const Color(0xFF2a7ae2),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Cairo',
-                decoration: TextDecoration.underline,
-                decorationColor: const Color(0xFF2a7ae2),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

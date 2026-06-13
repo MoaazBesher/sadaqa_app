@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'widgets/shared_drawer.dart';
+import 'widgets/shared_footer.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -86,7 +88,9 @@ class _SonanRawatibPageState extends State<SonanRawatibPage> {
         return false;
       },
       child: Scaffold(
+        endDrawer: const SharedDrawer(activeSection: AppSection.sonan),
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           backgroundColor: Color(0xFF2D2D2D),
           title: Text(
             'السنن الرواتب',
@@ -98,6 +102,14 @@ class _SonanRawatibPageState extends State<SonanRawatibPage> {
             ),
           ),
           centerTitle: true,
+                    actions: [
+            Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu_rounded, color: Color(0xFFFFD700)),
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+              ),
+            ),
+          ],
           iconTheme: IconThemeData(
             color: Color(0xFFFFD700),
             size: 30,
@@ -116,7 +128,7 @@ class _SonanRawatibPageState extends State<SonanRawatibPage> {
             ],
           ),
         ),
-        bottomNavigationBar: _buildProfessionalFooter(),
+        bottomNavigationBar: const SharedFooter(),
       ),
     );
   }
@@ -248,49 +260,6 @@ class _SonanRawatibPageState extends State<SonanRawatibPage> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildProfessionalFooter() {
-    return Container(
-      height: 70,
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: Color(0xFF121212),
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFF252525),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Designed and developed by ',
-            style: TextStyle(
-              color: Color(0xFF555555),
-              fontSize: 14,
-              fontFamily: 'Cairo',
-            ),
-          ),
-          GestureDetector(
-            onTap: _launchDeveloperWebsite,
-            child: Text(
-              'Moaaz Ashraf',
-              style: TextStyle(
-                color: Color(0xFF2a7ae2),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Cairo',
-                decoration: TextDecoration.underline,
-                decorationColor: Color(0xFF2a7ae2),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

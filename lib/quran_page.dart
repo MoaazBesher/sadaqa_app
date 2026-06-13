@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'widgets/shared_drawer.dart';
+import 'widgets/shared_footer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'quran/elmenshawy_page.dart';
 import 'quran/abdulbasit_page.dart';
@@ -125,8 +127,10 @@ class _QuranPageState extends State<QuranPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: const SharedDrawer(activeSection: AppSection.quran),
       backgroundColor: Color(0xFF121212),
       appBar: AppBar(
+          automaticallyImplyLeading: false,
         backgroundColor: Color(0xFF1E1E1E),
         title: Text(
           'قرآن كريم',
@@ -138,10 +142,14 @@ class _QuranPageState extends State<QuranPage> {
           ),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Color(0xFFFFD700)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+                    actions: [
+            Builder(
+              builder: (context) => IconButton(
+                icon: const Icon(Icons.menu_rounded, color: Color(0xFFFFD700)),
+                onPressed: () => Scaffold.of(context).openEndDrawer(),
+              ),
+            ),
+          ],
         iconTheme: IconThemeData(
           color: Color(0xFFFFD700),
           size: 30,
@@ -162,7 +170,7 @@ class _QuranPageState extends State<QuranPage> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildProfessionalFooter(),
+      bottomNavigationBar: const SharedFooter(),
     );
   }
 
@@ -287,48 +295,6 @@ Widget _buildSheikhList() {
     ),
   );
 }
-  Widget _buildProfessionalFooter() {
-    return Container(
-      height: 70,
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      decoration: BoxDecoration(
-        color: Color(0xFF121212),
-        border: Border(
-          top: BorderSide(
-            color: Color(0xFF252525),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Designed and developed by ',
-            style: TextStyle(
-              color: Color(0xFF555555),
-              fontSize: 14,
-              fontFamily: 'Cairo',
-            ),
-          ),
-          GestureDetector(
-            onTap: _launchDeveloperWebsite,
-            child: Text(
-              'Moaaz Ashraf',
-              style: TextStyle(
-                color: Color(0xFF2a7ae2),
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Cairo',
-                decoration: TextDecoration.underline,
-                decorationColor: Color(0xFF2a7ae2),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   void dispose() {
