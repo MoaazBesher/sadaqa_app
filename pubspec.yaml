@@ -29,6 +29,7 @@ dependencies:
   firebase_messaging: ^14.7.0
   http: ^1.1.0
   scrollable_positioned_list: ^0.3.8
+  home_widget: ^0.9.3
 
 
 

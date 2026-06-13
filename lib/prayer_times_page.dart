@@ -5,6 +5,7 @@ import 'widgets/shared_footer.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
+import 'services/widget_service.dart';
 
 
 class PrayerTimesPage extends StatefulWidget {
@@ -90,6 +91,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> with WidgetsBindingOb
             _isLoading = false;
           });
           _calculateNextPrayer();
+          WidgetService.updatePrayerTimesWidget();
         }
       } else {
         _setDefaultTimes();

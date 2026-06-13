@@ -21,6 +21,7 @@ import 'doaa_page.dart';
 import 'quran_page.dart';
 import 'moshaf_page.dart';
 import 'update_checker.dart';
+import 'services/widget_service.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -63,6 +64,7 @@ class _HomePageState extends State<HomePage> {
     await _setupVisitorTracking();
     _loadDailyMessage();
     _loadVisitorStats();
+    WidgetService.updatePrayerTimesWidget();
   }
 
   Future<void> _setupVisitorTracking() async {
@@ -106,12 +108,14 @@ class _HomePageState extends State<HomePage> {
           _dailyMessage = message;
         });
       }
+      WidgetService.updateDailyMessageWidget(message);
     }, onError: (error) {
       if (mounted) {
         setState(() {
           _dailyMessage = "تذكرة اليوم: الدعاء للموتى صدقة جارية";
         });
       }
+      WidgetService.updateDailyMessageWidget("تذكرة اليوم: الدعاء للموتى صدقة جارية");
     });
   }
 
