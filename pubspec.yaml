@@ -53,6 +53,7 @@ flutter:
     - assets/images/
     - assets/sounds/
     - assets/quran.json
+    - assets/doaa.json
     # - assets/sounds/prayer_athan.mp3
     - assets/sounds/morning_azkar.mp3
     - assets/sounds/evening_azkar.mp3
